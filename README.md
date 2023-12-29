@@ -25,6 +25,11 @@
    cp .env.dist .env
    ```
 
+2. Docker Composeでイメージを立ち上げます
+   ```bash
+   docker compose up -d
+   ```
+
 ## Tips
 
 ### ボリュームの削除
@@ -47,19 +52,19 @@ docker compose ps
 Docker Composeで管理されているコンテナのログを確認するには、以下のコマンドを使用します：
 
 ```bash
-docker-compose logs
+docker compose logs
 ```
 
 特定のコンテナのログのみを表示したい場合は、コンテナ名を指定します：
 
 ```bash
-docker-compose logs [コンテナ名]
+docker compose logs [コンテナ名]
 ```
 
 例えば、PostgreSQLコンテナのログのみを確認するには、以下のようにします：
 
 ```bash
-docker-compose logs db
+docker compose logs db
 ```
 
 このコマンドは、指定されたコンテナのログを表示します。これにより、エラーや警告、その他の実行時の出力を確認することができます。
