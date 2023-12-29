@@ -1,0 +1,69 @@
+version: "3.9"  # 使用するDocker Composeのバージョン
+
+services:
+  # PostgreSQLコンテナの設定
+  # https://hub.docker.com/_/postgres
+  db:
+    build:  # PostgreSQLコンテナのビルド設定
+      context: ./docker/postgres  # Dockerfileのパス（相対パス）
+      dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
+      args:
+        - DB_LANG=${POSTGRES_LOCALE}  # ビルド時の引数、ここではデータベースの言語設定（環境変数から取得）
+    container_name: ${CONTAINER_PREFIX}-db  # コンテナ名（環境変数から取得）
+    volumes:
+      - db-store:/var/lib/postgresql/data  # データベースのデータを保存するボリューム
+    environment:  # 環境変数
+      - PGPORT=$POSTGRES_PORT  # PostgreSQLのポート
+      - POSTGRES_DB=$POSTGRES_DB  # データベース名
+      - POSTGRES_USER=$POSTGRES_USER  # データベースユーザー名
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD  # データベースパスワード
+    healthcheck:  # ヘルスチェック設定
+      test: pg_isready -U ${POSTGRES_USER} || exit 1  # データベースが利用可能かチェック
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}  # ポートのマッピング（環境変数から取得）
+    networks:
+      - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
+
+  # pgAdminコンテナの設定
+  # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+  pgadmin:
+    build:  # pgAdminコンテナのビルド設定
+      context: ./docker/pgadmin  # Dockerfileのパス（相対パス）
+      dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
+    container_name: ${CONTAINER_PREFIX}-pgadmin  # コンテナ名（環境変数から取得）
+    volumes:
+      - pgadmin-store:/var/lib/pgadmin  # pgAdminのデータを保存するボリューム
+    environment:  # 環境変数
+      - CONTAINER_PREFIX=${CONTAINER_PREFIX}  # コンテナ名のプレフィックス（環境変数から取得）
+      - PGADMIN_DEFAULT_EMAIL=$PGADMIN_DEFAULT_EMAIL  # pgAdminのデフォルトユーザーのメールアドレス
+      - PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD  # pgAdminのデフォルトユーザーのパスワード
+      - POSTGRES_PORT=$POSTGRES_PORT  # PostgreSQLのポート（環境変数から取得）
+      - POSTGRES_DB=$POSTGRES_DB  # PostgreSQLのデータベース名（環境変数から取得）
+      - POSTGRES_USER=$POSTGRES_USER  # PostgreSQLのユーザー名（環境変数から取得）
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD  # PostgreSQLのパスワード（環境変数から取得）
+      # 以下は、PgAdminにアクセスする際、ユーザー認証を省略するための設定
+      - PGADMIN_CONFIG_SERVER_MODE=False  # pgAdminのサーバーモード設定（Falseでシングルユーザーモード）
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False  # マスターパスワードの要求設定（Falseでユーザーのパスワード入力を省略）
+    healthcheck:  # ヘルスチェック設定
+      test: wget -O - http://localhost:80/misc/ping  # pgAdminが利用可能かチェック
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - ${PGADMIN_PORT}:80  # ポートのマッピング（環境変数から取得）
+    networks:
+      - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
+    depends_on:
+      db:  # 依存関係
+        condition: service_healthy  # dbサービスがヘルシー状態になるのを待ってから起動
+
+volumes:
+  db-store:  # PostgreSQL用のボリューム
+  pgadmin-store:  # pgAdmin用のボリューム
+
+networks:  # ネットワークの設定
+  pgadmin-network:
