@@ -12,13 +12,23 @@ services:
     container_name: ${CONTAINER_PREFIX}-db  # コンテナ名（環境変数から取得）
     volumes:
       - db-store:/var/lib/postgresql/data  # データベースのデータを保存するボリューム
+    secrets:
+      - postgres_database  # データベース名のシークレットファイル
+      - postgres_user  # データベースユーザー名のシークレットファイル
+      - postgres_password  # データベースパスワードのシークレットファイル
     environment:  # 環境変数
       - PGPORT=$POSTGRES_PORT  # PostgreSQLのポート
-      - POSTGRES_DB=$POSTGRES_DB  # データベース名
-      - POSTGRES_USER=$POSTGRES_USER  # データベースユーザー名
-      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD  # データベースパスワード
+      - POSTGRES_DB_FILE=/run/secrets/postgres_database  # データベース名のシークレットファイル
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user  # データベースユーザー名のシークレットファイル
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password  # データベースパスワードのシークレットファイル
     healthcheck:  # ヘルスチェック設定
-      test: pg_isready -U ${POSTGRES_USER} || exit 1  # データベースが利用可能かチェック
+      test: > # データベースが利用可能かチェック
+        pg_isready
+        -h 127.0.0.1
+        -p ${POSTGRES_PORT}
+        -d `cat /run/secrets/postgres_database`
+        -U `cat /run/secrets/postgres_user`
+        || exit 1
       interval: 2s
       timeout: 5s
       retries: 10
@@ -36,14 +46,15 @@ services:
     container_name: ${CONTAINER_PREFIX}-pgadmin  # コンテナ名（環境変数から取得）
     volumes:
       - pgadmin-store:/var/lib/pgadmin  # pgAdminのデータを保存するボリューム
+    secrets:
+      - postgres_database  # データベース名のシークレットファイル
+      - postgres_user  # データベースユーザー名のシークレットファイル
+      - postgres_password  # データベースパスワードのシークレットファイル
     environment:  # 環境変数
-      - CONTAINER_PREFIX=${CONTAINER_PREFIX}  # コンテナ名のプレフィックス（環境変数から取得）
+      - POSTGRES_HOST=db  # PostgreSQLのホスト名
+      - POSTGRES_PORT=$POSTGRES_PORT  # PostgreSQLのポート
       - PGADMIN_DEFAULT_EMAIL=$PGADMIN_DEFAULT_EMAIL  # pgAdminのデフォルトユーザーのメールアドレス
       - PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD  # pgAdminのデフォルトユーザーのパスワード
-      - POSTGRES_PORT=$POSTGRES_PORT  # PostgreSQLのポート（環境変数から取得）
-      - POSTGRES_DB=$POSTGRES_DB  # PostgreSQLのデータベース名（環境変数から取得）
-      - POSTGRES_USER=$POSTGRES_USER  # PostgreSQLのユーザー名（環境変数から取得）
-      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD  # PostgreSQLのパスワード（環境変数から取得）
       # 以下は、PgAdminにアクセスする際、ユーザー認証を省略するための設定
       - PGADMIN_CONFIG_SERVER_MODE=False  # pgAdminのサーバーモード設定（Falseでシングルユーザーモード）
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False  # マスターパスワードの要求設定（Falseでユーザーのパスワード入力を省略）
@@ -60,6 +71,14 @@ services:
     depends_on:
       db:  # 依存関係
         condition: service_healthy  # dbサービスがヘルシー状態になるのを待ってから起動
+
+secrets:
+  postgres_database:
+    file: ./.docker/postgres/secrets/database.txt  # データベース名のシークレットファイル
+  postgres_user:
+    file: ./.docker/postgres/secrets/user.txt  # データベースユーザー名のシークレットファイル
+  postgres_password:
+    file: ./.docker/postgres/secrets/password.txt  # データベースパスワードのシークレットファイル
 
 volumes:
   db-store:  # PostgreSQL用のボリューム

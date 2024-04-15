@@ -4,15 +4,23 @@ FROM dpage/pgadmin4:latest
 USER root
 
 # パッケージのインストールと設定ファイルの作成
-RUN apk add --no-cache gettext && \
-    touch /pgadmin4/servers.json && \
-    chown -R 5050:5050 /pgadmin4/servers.json
+RUN apk add --no-cache gettext
+
+# 設定ファイルの作成
+RUN touch /pgadmin4/servers.json && \
+    chown 5050:5050 /pgadmin4/servers.json
 
 # 設定ファイルのテンプレートをコピー
-COPY servers.json.template /pgadmin4/servers.json.template
+COPY servers.json.template /templates/servers.json.template
+
+# 起動時に実行するスクリプトをコピー
+COPY --chown=5050:5050 substitute-vars.sh /substitute-vars.sh
+COPY --chown=5050:5050 custom-entrypoint.sh /custom-entrypoint.sh
+RUN chmod u+x /substitute-vars.sh && \
+    chmod u+x /custom-entrypoint.sh
 
 # ユーザーを戻す
 USER 5050
 
 # 設定ファイルのテンプレートを環境変数を用いて置換し、起動時に実行する
-ENTRYPOINT ["sh", "-c", "envsubst < /pgadmin4/servers.json.template > /pgadmin4/servers.json && /entrypoint.sh"]
+ENTRYPOINT ["sh", "/custom-entrypoint.sh"]

@@ -1,13 +1,13 @@
 {
     "Servers": {
         "1": {
-            "Name": "LocalDB(${CONTAINER_PREFIX})",
+            "Name": "LocalDB",
             "Group": "Servers",
-            "Host": "db",
+            "Host": "${POSTGRES_HOST}",
             "Port": ${POSTGRES_PORT},
             "Username": "${POSTGRES_USER}",
-            "Password": "${POSTGRES_PASSWORD}",
-            "MaintenanceDB": "${POSTGRES_DB}"
+            "MaintenanceDB": "${POSTGRES_DB}",
+            "SSLMode": "prefer",
         }
     }
 }
