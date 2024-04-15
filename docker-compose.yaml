@@ -5,7 +5,7 @@ services:
   # https://hub.docker.com/_/postgres
   db:
     build:  # PostgreSQLコンテナのビルド設定
-      context: ./docker/postgres  # Dockerfileのパス（相対パス）
+      context: ./.docker/postgres  # Dockerfileのパス（相対パス）
       dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
       args:
         - DB_LANG=${POSTGRES_LOCALE}  # ビルド時の引数、ここではデータベースの言語設定（環境変数から取得）
@@ -31,7 +31,7 @@ services:
   # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
   pgadmin:
     build:  # pgAdminコンテナのビルド設定
-      context: ./docker/pgadmin  # Dockerfileのパス（相対パス）
+      context: ./.docker/pgadmin  # Dockerfileのパス（相対パス）
       dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
     container_name: ${CONTAINER_PREFIX}-pgadmin  # コンテナ名（環境変数から取得）
     volumes:
