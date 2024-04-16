@@ -2,6 +2,7 @@ ROOT_DIR := $(shell git rev-parse --show-toplevel)
 SECRETS_DIR := $(ROOT_DIR)/.docker/postgres/secrets
 DEFAULT_DB_NAME := postgres_docker_template
 DEFAULT_USER_NAME := postgres_docker_template_user
+PASSWORD_LENGTH := 13
 
 # ビルトインルールを無効にする
 MAKEFLAGS += --no-builtin-rules
@@ -42,7 +43,7 @@ $(SECRETS_DIR)/user.txt:
 $(SECRETS_DIR)/password.txt:
 	$(call prompt_for_value,$@,\
 	"Enter the user password (Press enter for a random value):",\
-	$$( $(call generate_random_string,13) ))
+	$$( $(call generate_random_string,${PASSWORD_LENGTH}) ))
 
 .PHONY: init-database
 init-database: $(SECRETS_DIR)/database.txt $(SECRETS_DIR)/user.txt $(SECRETS_DIR)/password.txt
