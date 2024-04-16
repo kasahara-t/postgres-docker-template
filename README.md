@@ -2,6 +2,11 @@
 
 このリポジトリは、PostgreSQLデータベースとpgAdmin管理ツールをDockerコンテナとしてセットアップするためのものです。
 
+## 前提条件
+
+* コンテナ実行環境（Docker Desktop、Rancher Desktop、WSL2など）
+* make
+
 ## ディレクトリ構成
 
 ```
