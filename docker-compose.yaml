@@ -37,6 +37,26 @@ services:
     networks:
       - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
 
+  migrator:
+    build:
+      context: ./.docker/migrator
+    container_name: ${CONTAINER_PREFIX}-migrator
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_root_password
+      POSTGRES_DATABASE_FILE: /run/secrets/postgres_database
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_database
+    networks:
+      - migrator-network
+    depends_on:
+      db:
+        condition: service_healthy
+
   # pgAdminコンテナの設定
   # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
   pgadmin:
@@ -86,3 +106,4 @@ volumes:
 
 networks:  # ネットワークの設定
   pgadmin-network:
+  migrator-network:

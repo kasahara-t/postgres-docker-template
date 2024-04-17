@@ -31,19 +31,13 @@ endef
 
 # データベースの設定
 $(SECRETS_DIR)/database.txt:
-	$(call prompt_for_value,$@,\
-	"Enter the database name (Press enter for default: $(DEFAULT_DB_NAME)):",\
-	$(DEFAULT_DB_NAME))
+	$(call prompt_for_value,$@,"Enter the database name (Press enter for default: $(DEFAULT_DB_NAME)):",$(DEFAULT_DB_NAME))
 
 $(SECRETS_DIR)/user.txt:
-	$(call prompt_for_value,$@,\
-	"Enter the user name (Press enter for default: $(DEFAULT_USER_NAME)):",\
-	$(DEFAULT_USER_NAME))
+	$(call prompt_for_value,$@,"Enter the user name (Press enter for default: $(DEFAULT_USER_NAME)):",$(DEFAULT_USER_NAME))
 
 $(SECRETS_DIR)/password.txt:
-	$(call prompt_for_value,$@,\
-	"Enter the user password (Press enter for a random value):",\
-	$$( $(call generate_random_string,${PASSWORD_LENGTH}) ))
+	$(call prompt_for_value,$@,"Enter the user password (Press enter for a random value):",$$( $(call generate_random_string,${PASSWORD_LENGTH}) ))
 
 .PHONY: init-database
 init-database: $(SECRETS_DIR)/database.txt $(SECRETS_DIR)/user.txt $(SECRETS_DIR)/password.txt
