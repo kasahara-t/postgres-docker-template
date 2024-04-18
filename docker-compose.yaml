@@ -3,15 +3,15 @@ version: "3.9"  # 使用するDocker Composeのバージョン
 services:
   # PostgreSQLコンテナの設定
   # https://hub.docker.com/_/postgres
-  db:
+  postgres:
     build:  # PostgreSQLコンテナのビルド設定
       context: ./.docker/postgres  # Dockerfileのパス（相対パス）
       dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
       args:
         - DB_LANG=${POSTGRES_LOCALE}  # ビルド時の引数、ここではデータベースの言語設定（環境変数から取得）
-    container_name: ${CONTAINER_PREFIX}-db  # コンテナ名（環境変数から取得）
+    container_name: ${CONTAINER_PREFIX}-postgres  # コンテナ名（環境変数から取得）
     volumes:
-      - db-store:/var/lib/postgresql/data  # データベースのデータを保存するボリューム
+      - postgres-store:/var/lib/postgresql/data  # データベースのデータを保存するボリューム
     secrets:
       - postgres_database  # データベース名のシークレットファイル
       - postgres_user  # データベースユーザー名のシークレットファイル
@@ -36,16 +36,17 @@ services:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}  # ポートのマッピング（環境変数から取得）
     networks:
       - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
+      - migrator-network
 
   migrator:
     build:
       context: ./.docker/migrator
     container_name: ${CONTAINER_PREFIX}-migrator
     environment:
-      POSTGRES_HOST: db
+      POSTGRES_HOST: postgres
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER_FILE: /run/secrets/postgres_user
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_root_password
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DATABASE_FILE: /run/secrets/postgres_database
     secrets:
       - postgres_user
@@ -54,7 +55,7 @@ services:
     networks:
       - migrator-network
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
   # pgAdminコンテナの設定
@@ -71,7 +72,7 @@ services:
       - postgres_user  # データベースユーザー名のシークレットファイル
       - postgres_password  # データベースパスワードのシークレットファイル
     environment:  # 環境変数
-      - POSTGRES_HOST=db  # PostgreSQLのホスト名
+      - POSTGRES_HOST=postgres  # PostgreSQLのホスト名
       - POSTGRES_PORT=$POSTGRES_PORT  # PostgreSQLのポート
       - PGADMIN_DEFAULT_EMAIL=$PGADMIN_DEFAULT_EMAIL  # pgAdminのデフォルトユーザーのメールアドレス
       - PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD  # pgAdminのデフォルトユーザーのパスワード
@@ -89,8 +90,8 @@ services:
     networks:
       - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
     depends_on:
-      db:  # 依存関係
-        condition: service_healthy  # dbサービスがヘルシー状態になるのを待ってから起動
+      postgres:  # 依存関係
+        condition: service_healthy  # postgresサービスがヘルシー状態になるのを待ってから起動
 
 secrets:
   postgres_database:
@@ -101,7 +102,7 @@ secrets:
     file: ./.docker/postgres/secrets/password.txt  # データベースパスワードのシークレットファイル
 
 volumes:
-  db-store:  # PostgreSQL用のボリューム
+  postgres-store:  # PostgreSQL用のボリューム
   pgadmin-store:  # pgAdmin用のボリューム
 
 networks:  # ネットワークの設定

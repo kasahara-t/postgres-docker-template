@@ -18,5 +18,7 @@ if [ -n "$POSTGRES_DATABASE_FILE" ] && [ -f "$POSTGRES_DATABASE_FILE" ]; then
     DATABASE=$(cat "$POSTGRES_DATABASE_FILE")
 fi
 
+URL="postgres://${USER}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}?sslmode=disable"
+
 # マイグレーションの実行
-migrate -path /app/histories -database "postgres://${USER}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}?sslmode=disable" up
+migrate -path /app/histories -database $URL up
