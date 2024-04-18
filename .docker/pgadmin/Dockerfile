@@ -16,6 +16,7 @@ COPY servers.json.template /templates/servers.json.template
 # 起動時に実行するスクリプトをコピー
 COPY --chown=5050:5050 substitute-vars.sh /substitute-vars.sh
 COPY --chown=5050:5050 custom-entrypoint.sh /custom-entrypoint.sh
+
 RUN chmod u+x /substitute-vars.sh && \
     chmod u+x /custom-entrypoint.sh
 

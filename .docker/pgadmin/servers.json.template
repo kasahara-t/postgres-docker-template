@@ -7,7 +7,7 @@
             "Port": ${POSTGRES_PORT},
             "Username": "${POSTGRES_USER}",
             "MaintenanceDB": "${POSTGRES_DB}",
-            "SSLMode": "prefer",
+            "SSLMode": "prefer"
         }
     }
 }
