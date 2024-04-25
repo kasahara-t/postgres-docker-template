@@ -1,28 +1,26 @@
-version: "3.9"  # 使用するDocker Composeのバージョン
+version: "3.9"
 
 services:
-  # PostgreSQLコンテナの設定
-  # https://hub.docker.com/_/postgres
   postgres:
-    build:  # PostgreSQLコンテナのビルド設定
-      context: ./.docker/postgres  # Dockerfileのパス（相対パス）
-      dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
+    build:
+      context: ./.docker/postgres
+      dockerfile: Dockerfile
       args:
-        - DB_LANG=${POSTGRES_LOCALE}  # ビルド時の引数、ここではデータベースの言語設定（環境変数から取得）
-    container_name: ${CONTAINER_PREFIX}-postgres  # コンテナ名（環境変数から取得）
+        - DB_LANG=${POSTGRES_LOCALE}
+    container_name: ${CONTAINER_PREFIX}-postgres
     volumes:
-      - postgres-store:/var/lib/postgresql/data  # データベースのデータを保存するボリューム
+      - postgres-store:/var/lib/postgresql/data
     secrets:
-      - postgres_database  # データベース名のシークレットファイル
-      - postgres_user  # データベースユーザー名のシークレットファイル
-      - postgres_password  # データベースパスワードのシークレットファイル
-    environment:  # 環境変数
-      - PGPORT=$POSTGRES_PORT  # PostgreSQLのポート
-      - POSTGRES_DB_FILE=/run/secrets/postgres_database  # データベース名のシークレットファイル
-      - POSTGRES_USER_FILE=/run/secrets/postgres_user  # データベースユーザー名のシークレットファイル
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password  # データベースパスワードのシークレットファイル
-    healthcheck:  # ヘルスチェック設定
-      test: > # データベースが利用可能かチェック
+      - postgres_database
+      - postgres_user
+      - postgres_password
+    environment:
+      - PGPORT=$POSTGRES_PORT
+      - POSTGRES_DB_FILE=/run/secrets/postgres_database
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    healthcheck:
+      test: >
         pg_isready
         -h 127.0.0.1
         -p ${POSTGRES_PORT}
@@ -33,9 +31,9 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}  # ポートのマッピング（環境変数から取得）
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     networks:
-      - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
+      - pgadmin-network
       - migrator-network
 
   migrator:
@@ -58,53 +56,50 @@ services:
       postgres:
         condition: service_healthy
 
-  # pgAdminコンテナの設定
-  # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
   pgadmin:
-    build:  # pgAdminコンテナのビルド設定
-      context: ./.docker/pgadmin  # Dockerfileのパス（相対パス）
-      dockerfile: Dockerfile  # 使用するDockerfile（contextからの相対パス）
-    container_name: ${CONTAINER_PREFIX}-pgadmin  # コンテナ名（環境変数から取得）
+    build:
+      context: ./.docker/pgadmin
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX}-pgadmin
     volumes:
-      - pgadmin-store:/var/lib/pgadmin  # pgAdminのデータを保存するボリューム
+      - pgadmin-store:/var/lib/pgadmin
     secrets:
-      - postgres_database  # データベース名のシークレットファイル
-      - postgres_user  # データベースユーザー名のシークレットファイル
-      - postgres_password  # データベースパスワードのシークレットファイル
-    environment:  # 環境変数
-      - POSTGRES_HOST=postgres  # PostgreSQLのホスト名
-      - POSTGRES_PORT=$POSTGRES_PORT  # PostgreSQLのポート
-      - PGADMIN_DEFAULT_EMAIL=$PGADMIN_DEFAULT_EMAIL  # pgAdminのデフォルトユーザーのメールアドレス
-      - PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD  # pgAdminのデフォルトユーザーのパスワード
-      # 以下は、PgAdminにアクセスする際、ユーザー認証を省略するための設定
-      - PGADMIN_CONFIG_SERVER_MODE=False  # pgAdminのサーバーモード設定（Falseでシングルユーザーモード）
-      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False  # マスターパスワードの要求設定（Falseでユーザーのパスワード入力を省略）
-    healthcheck:  # ヘルスチェック設定
-      test: wget -O - http://localhost:80/misc/ping  # pgAdminが利用可能かチェック
+      - postgres_database
+      - postgres_user
+      - postgres_password
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=$POSTGRES_PORT
+      - PGADMIN_DEFAULT_EMAIL=$PGADMIN_DEFAULT_EMAIL
+      - PGADMIN_DEFAULT_PASSWORD=$PGADMIN_DEFAULT_PASSWORD
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    healthcheck:
+      test: wget -O - http://localhost:80/misc/ping
       interval: 2s
       timeout: 5s
       retries: 10
       start_period: 10s
     ports:
-      - ${PGADMIN_PORT}:80  # ポートのマッピング（環境変数から取得）
+      - ${PGADMIN_PORT}:80
     networks:
-      - pgadmin-network  # PgAdminコンテナと同じネットワークに接続
+      - pgadmin-network
     depends_on:
-      postgres:  # 依存関係
-        condition: service_healthy  # postgresサービスがヘルシー状態になるのを待ってから起動
+      postgres:
+        condition: service_healthy
 
 secrets:
   postgres_database:
-    file: ./.docker/postgres/secrets/database.txt  # データベース名のシークレットファイル
+    file: ./.docker/postgres/secrets/database.txt
   postgres_user:
-    file: ./.docker/postgres/secrets/user.txt  # データベースユーザー名のシークレットファイル
+    file: ./.docker/postgres/secrets/user.txt
   postgres_password:
-    file: ./.docker/postgres/secrets/password.txt  # データベースパスワードのシークレットファイル
+    file: ./.docker/postgres/secrets/password.txt
 
 volumes:
-  postgres-store:  # PostgreSQL用のボリューム
-  pgadmin-store:  # pgAdmin用のボリューム
+  postgres-store:
+  pgadmin-store:
 
-networks:  # ネットワークの設定
+networks:
   pgadmin-network:
   migrator-network:

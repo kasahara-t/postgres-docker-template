@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# mysql接続情報の取得
+# Set the environment variables
 HOST="${POSTGRES_HOST:-localhost}"
 PORT="${POSTGRES_PORT:-5432}"
 USER="${POSTGRES_USER:-postgres}"
 PASSWORD="${POSTGRES_PASSWORD:-}"
 DATABASE="${POSTGRES_DATABASE:-}"
 
-# _fileの環境変数があればそれを優先
+# If the environment variables are set in a file, use them
 if [ -n "$POSTGRES_USER_FILE" ] && [ -f "$POSTGRES_USER_FILE" ]; then
     USER=$(cat "$POSTGRES_USER_FILE")
 fi
@@ -20,5 +20,5 @@ fi
 
 URL="postgres://${USER}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}?sslmode=disable"
 
-# マイグレーションの実行
+# Run the migrations
 migrate -path /app/histories -database $URL up
