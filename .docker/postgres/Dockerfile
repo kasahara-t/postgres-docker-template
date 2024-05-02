@@ -8,4 +8,4 @@ RUN localedef -i $DB_LANG -c -f UTF-8 -A /usr/share/locale/locale.alias $DB_LANG
 ENV LANG $DB_LANG.utf8
 
 # Copy the initial SQL file for database setup
-COPY ./initdb.d/init.sql /docker-entrypoint-initdb.d/init.sql
+COPY ./initdb.d/ /docker-entrypoint-initdb.d/
