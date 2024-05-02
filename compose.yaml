@@ -1,4 +1,4 @@
-version: "3.9"
+name: postgres-docker-template
 
 services:
   postgres:
@@ -7,9 +7,11 @@ services:
       dockerfile: Dockerfile
       args:
         - DB_LANG=${POSTGRES_LOCALE}
-    container_name: ${CONTAINER_PREFIX}-postgres
     volumes:
-      - postgres-store:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    configs:
+      - source: postgres_conf
+        target: /etc/postgresql/postgresql.conf
     secrets:
       - postgres_database
       - postgres_user
@@ -33,13 +35,12 @@ services:
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     networks:
-      - pgadmin-network
-      - migrator-network
+      - pgadmin-tier
+      - migrator-tier
 
   migrator:
     build:
       context: ./.docker/migrator
-    container_name: ${CONTAINER_PREFIX}-migrator
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: ${POSTGRES_PORT}
@@ -51,7 +52,7 @@ services:
       - postgres_password
       - postgres_database
     networks:
-      - migrator-network
+      - migrator-tier
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,9 +61,8 @@ services:
     build:
       context: ./.docker/pgadmin
       dockerfile: Dockerfile
-    container_name: ${CONTAINER_PREFIX}-pgadmin
     volumes:
-      - pgadmin-store:/var/lib/pgadmin
+      - pgadmin-data:/var/lib/pgadmin
     secrets:
       - postgres_database
       - postgres_user
@@ -83,10 +83,14 @@ services:
     ports:
       - ${PGADMIN_PORT}:80
     networks:
-      - pgadmin-network
+      - pgadmin-tier
     depends_on:
       postgres:
         condition: service_healthy
+          
+configs:
+  postgres_conf:
+    file: ./.docker/postgres/postgresql.conf
 
 secrets:
   postgres_database:
@@ -97,9 +101,9 @@ secrets:
     file: ./.docker/postgres/secrets/password.txt
 
 volumes:
-  postgres-store:
-  pgadmin-store:
+  postgres-data: {}
+  pgadmin-data: {}
 
 networks:
-  pgadmin-network:
-  migrator-network:
+  pgadmin-tier: {}
+  migrator-tier: {}
