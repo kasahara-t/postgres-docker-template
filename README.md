@@ -41,6 +41,7 @@ Here are some useful commands provided by this project:
 * `make stop`: Stops and removes all containers.
 * `make init`: Generates all required files for the setup.
 * `make clean`: Removes all generated files.
+* `make build`: Rebuilds the Docker containers and starts them. This command is particularly useful for executing migration scripts. Since migration scripts are copied into the container at build time, a rebuild is necessary to execute newly added migrations.
 
 ## Configuration
 
